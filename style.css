@@ -1,0 +1,150 @@
+/* --- BASE SETTINGS --- */
+body {
+    margin: 0;
+    overflow: hidden;
+    background-color: #ffe6e6; 
+    font-family: 'Arial', sans-serif;
+    overscroll-behavior: none;
+    touch-action: none;
+}
+
+/* --- LAYERS --- */
+#game-layer {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    z-index: 10;
+    pointer-events: none; /* Allows clicks to pass through empty space */
+}
+
+#overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.8); /* Dark Dim */
+    opacity: 0;
+    pointer-events: auto; /* This catches the click to reset */
+    transition: opacity 0.5s;
+    z-index: 500; /* Above normal envelopes (20), below Zoomed (1000) */
+    display: none;
+}
+#overlay.active { display: block; opacity: 1; }
+
+/* --- ENVELOPE --- */
+.envelope-container {
+    position: absolute;
+    width: 22vmin; 
+    height: 14vmin;
+    cursor: pointer;
+    pointer-events: auto;
+    transition: transform 0.1s linear; /* Fast for physics */
+    -webkit-tap-highlight-color: transparent; 
+    z-index: 20;
+}
+
+/* --- THE ZOOM STATE (CRITICAL) --- */
+/* This class forces the envelope to center, overriding JS physics */
+.envelope-container.zoomed {
+    position: fixed !important; 
+    top: 50% !important;
+    left: 50% !important;
+    /* Center it and Scale it up */
+    transform: translate(-50%, -50%) scale(3) !important; 
+    z-index: 1000 !important; /* Sit ON TOP of the overlay */
+    transition: all 0.5s cubic-bezier(0.25, 1, 0.5, 1) !important; /* Smooth zoom */
+}
+
+/* --- ENVELOPE PARTS --- */
+.envelope {
+    position: relative; width: 100%; height: 100%;
+    background-color: #ff1a1a; 
+    border-radius: 1.5vmin;
+    box-shadow: 0 1vmin 2vmin rgba(0,0,0,0.2);
+    overflow: visible !important; 
+}
+
+.front-number {
+    position: absolute; bottom: 1vmin; right: 2vmin;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 5vmin; font-weight: bold;
+    z-index: 30; pointer-events: none;
+}
+
+/* Flap */
+.envelope::before {
+    content: ''; position: absolute; top: 0; left: 0;
+    border-left: 11vmin solid transparent;
+    border-right: 11vmin solid transparent;
+    border-top: 8vmin solid #ff4d4d; 
+    z-index: 20; transform-origin: top;
+    transition: transform 0.4s ease 0.4s;
+}
+
+/* Pocket */
+.envelope::after {
+    content: ''; position: absolute; bottom: 0; left: 0;
+    border-left: 11vmin solid #cc0000; 
+    border-right: 11vmin solid #cc0000; 
+    border-bottom: 9vmin solid transparent;
+    transform: rotate(180deg); z-index: 15; 
+}
+
+/* Letter */
+.letter {
+    position: absolute; top: 1vmin; left: 1vmin;
+    width: 20vmin; height: 12vmin;
+    background-color: white; border-radius: 0.5vmin;
+    display: flex; justify-content: center; align-items: center;
+    font-size: 2.5vmin; color: #333; z-index: 5; 
+    box-shadow: 0 0.5vmin 1vmin rgba(0,0,0,0.1);
+    transition: top 0.5s ease, height 0.5s ease, z-index 0.1s ease;
+}
+.letter p { margin: 0; text-align: center; opacity: 0; transition: opacity 0.2s ease; user-select: none; }
+
+/* --- OPEN ANIMATIONS --- */
+.envelope-container.opened .envelope::before { 
+    transform: rotateX(180deg); z-index: 1; 
+    transition: transform 0.4s ease 0.2s; 
+}
+
+.envelope-container.opened .letter { 
+    top: -12vmin !important; 
+    height: 24vmin !important; 
+    z-index: 2000 !important; /* Highest layer */
+    transition: top 0.5s ease 0.6s, height 0.5s ease 0.6s, z-index 0.1s ease 0.6s; 
+}
+.envelope-container.opened .letter p { opacity: 1; transition: opacity 0.5s ease 1s; }
+
+/* --- READ STATE --- */
+.envelope-container.has-been-read .envelope { background-color: #ff9999 !important; }
+.envelope-container.has-been-read .envelope::before { border-top-color: #ffb3b3 !important; }
+.envelope-container.has-been-read .envelope::after { border-left-color: #ff8080 !important; border-right-color: #ff8080 !important; }
+
+/* --- BOSS (GOLD) --- */
+.golden-envelope .envelope { background: linear-gradient(135deg, #ffd700, #ffb300); box-shadow: 0 0 4vmin #ffd700; }
+.golden-envelope .envelope::before { border-top-color: #f1c40f !important; }
+.golden-envelope .envelope::after { border-left-color: #b7950b !important; border-right-color: #b7950b !important; }
+.golden-envelope .letter { border: 2px solid #d4af37; background: #fffbe6; }
+
+/* --- SCREENS --- */
+#boss-intro {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background-color: rgba(0,0,0,0.9);
+    z-index: 2000; display: none;
+    justify-content: center; align-items: center; text-align: center;
+    color: #ffd700; opacity: 0; transition: opacity 1s ease;
+}
+#boss-intro h1 { font-size: 6vmin; text-shadow: 0 0 20px #ffd700; animation: pulse 1s infinite alternate; }
+@keyframes pulse { from { transform: scale(1); } to { transform: scale(1.1); } }
+
+#finale-screen {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background-color: rgba(255, 230, 230, 0.95);
+    z-index: 3000; display: none;
+    justify-content: center; align-items: center;
+    opacity: 0; transition: opacity 2s ease;
+    pointer-events: auto;
+}
+#confetti-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+.final-message {
+    font-size: 8vmin; color: #ff1a1a; font-weight: bold;
+    text-align: center; z-index: 301; text-shadow: 2px 2px 0px white;
+    animation: float 3s ease-in-out infinite;
+}
+@keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
