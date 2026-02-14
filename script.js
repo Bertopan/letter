@@ -150,7 +150,9 @@ function handleClick(e, envObj) {
             envelopesRead++;
         }
 
-        if (gamePhase === 'boss') setTimeout(triggerFinale, 3000);
+    // 3. FINALE (only if this envelope is already opened and clicked again in boss phase)
+    } else if (envObj.state === 'opened' && currentZoomEnv === envObj && gamePhase === 'boss') {
+        triggerFinale();
     }
 }
 
@@ -182,6 +184,12 @@ function handleOverlayClick(e) {
     else activeEnv = activeEnvelopes.find(env => env.state === 'zoomed' || env.state === 'opened');
 
     if (activeEnv) {
+        // If envelope is opened in boss phase, trigger finale instead of closing
+        if (activeEnv.state === 'opened' && gamePhase === 'boss') {
+            triggerFinale();
+            return;
+        }
+        
         if (activeEnv.state === 'opened') {
             // Close paper first
             activeEnv.el.classList.remove('opened');
